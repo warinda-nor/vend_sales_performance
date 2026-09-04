@@ -1,0 +1,16 @@
+# Source data files — contain real vendor/company sales data, never push these
+*.xlsx
+*.xls
+*.csv
+
+# Data preview — any static HTML with a baked-in real-data snapshot
+# (Net Sales, article/brand names, growth %) is local-only, never pushed.
+preview/
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Editor/tooling junk
+.vscode/
+node_modules/
