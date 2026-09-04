@@ -181,6 +181,33 @@
   .filter-option:hover{ background:var(--surface-2); }
   .filter-option input{ cursor:pointer; accent-color:var(--accent); flex-shrink:0; }
 
+  /* ---------- Start Date / End Date range control ----------
+     Writes back into the Tableau "Start Date"/"End Date" Parameters that
+     already drive every CY/LY calculated field, so — unlike the old
+     client-side Month filter — this narrows every chart on the dashboard,
+     not just the ones sourced from the month-grain Trend worksheet. */
+  .date-range{ position:relative; display:flex; align-items:center; gap:6px; background:rgba(255,255,255,0.14); border:1px solid rgba(255,255,255,0.18); border-radius:8px; padding:4px 6px 4px 10px; }
+  .date-input{
+    width:86px; background:transparent; border:none; color:#fff; font-size:13.5px;
+    font-family:inherit; font-variant-numeric:tabular-nums; padding:4px 2px;
+  }
+  .date-input::placeholder{ color:rgba(255,255,255,0.55); }
+  .date-input:focus{ outline:none; }
+  .date-input.invalid{ color:#ffc2c2; }
+  .date-range-sep{ color:rgba(255,255,255,0.55); font-size:13px; }
+  .date-apply-btn{
+    background:rgba(255,255,255,0.22); border:1px solid rgba(255,255,255,0.32); color:#fff;
+    border-radius:6px; padding:6px 12px; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit;
+  }
+  .date-apply-btn:hover{ background:rgba(255,255,255,0.32); }
+  .date-apply-btn:disabled{ opacity:0.5; cursor:default; }
+  .date-range-note{
+    display:none; position:absolute; top:calc(100% + 6px); right:0; z-index:60; width:240px;
+    background:var(--surface); color:var(--bad); border:1px solid var(--border); border-radius:10px;
+    box-shadow:0 10px 30px rgba(11,11,11,0.16); padding:10px 12px; font-size:12.5px; font-weight:600; line-height:1.4;
+  }
+  .date-range-note.show{ display:block; }
+
   /* ---------- KPI row ---------- */
   .kpi-row{ display:grid; grid-template-columns: repeat(5, 1fr); gap:16px; margin-bottom:16px; }
   @media (max-width: 1100px){ .kpi-row{ grid-template-columns: repeat(3,1fr); } }
@@ -412,13 +439,12 @@
           </button>
           <div class="filter-panel"></div>
         </div>
-        <div class="filter-dropdown" data-filter="months">
-          <button class="filter-btn" type="button">
-            <span class="filter-label">Month</span>
-            <span class="filter-count"></span>
-            <svg class="ic" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div class="filter-panel"></div>
+        <div class="date-range" id="dateRangeFilter">
+          <input type="text" class="date-input" id="startDateInput" placeholder="DD/MM/YYYY" inputmode="numeric" maxlength="10" aria-label="Start Date">
+          <span class="date-range-sep">–</span>
+          <input type="text" class="date-input" id="endDateInput" placeholder="DD/MM/YYYY" inputmode="numeric" maxlength="10" aria-label="End Date">
+          <button type="button" class="date-apply-btn" id="dateApplyBtn">Apply</button>
+          <div class="date-range-note" id="dateRangeNote"></div>
         </div>
       </div>
       <button class="icon-btn" id="downloadAllBtn" title="Download all detail" aria-label="Download all detail">
@@ -561,23 +587,25 @@
   let currentYear = null, priorYear = null;
   const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  /* ---------- filters (Sales Office / MCH2_Desc / Month) ----------
+  /* ---------- filters (Sales Office / MCH2_Desc) ----------
      Options are read from the live Detail/Trend worksheet data every time
      it refreshes (see resetFilters() in the Tableau bootstrap below) — not
      fixed at load, since Tableau data can change (a workbook filter, a
-     parameter, a data extract refresh). Office and MCH2_Desc exist on both
-     sheets, so they narrow every card; Month only exists on the Trend sheet
-     (Detail has no date field at all), so it can only narrow the Monthly
-     Sales Trend chart and anything sourced from it (the KPI sparklines). */
-  const FILTERS = { offices: new Set(), mch2Desc: new Set(), months: new Set() };
+     parameter, a data extract refresh). Both fields exist on both sheets,
+     so either one narrows every card. The period itself (formerly a
+     client-side Month filter, which could only narrow the month-grain Trend
+     worksheet) is now a Start Date/End Date control further down that
+     writes back into the Tableau Parameters driving every CY/LY calculated
+     field — see the date-range wiring in the Tableau bootstrap below. */
+  const FILTERS = { offices: new Set(), mch2Desc: new Set() };
   const filterControllers = {};
 
   // Checkbox-list dropdown, wired to one FILTERS[key] Set. `options` is
-  // [{value, text}]; `value` is whatever aggregate()/computeTrendMonthly()
-  // compare the Set's contents against (dimension index for offices/
-  // mch2Desc, the raw month number for months). Listeners are attached once
-  // per key; setOptions() (called from resetFilters() on every data refresh)
-  // only swaps the option list and resets that filter back to "all selected".
+  // [{value, text}]; `value` is whatever aggregate() compares the Set's
+  // contents against (dimension index for offices/mch2Desc). Listeners are
+  // attached once per key; setOptions() (called from resetFilters() on every
+  // data refresh) only swaps the option list and resets that filter back to
+  // "all selected".
   function buildFilterDropdown(key, initialOptions){
     const wrap = document.querySelector('.filter-dropdown[data-filter="'+key+'"]');
     const btn = wrap.querySelector('.filter-btn');
@@ -637,17 +665,14 @@
 
   buildFilterDropdown('offices', []);
   buildFilterDropdown('mch2Desc', []);
-  buildFilterDropdown('months', []);
 
-  // Re-reads DIMS/TREND (fresh after every Tableau data load) into the three
+  // Re-reads DIMS (fresh after every Tableau data load) into the two
   // dropdowns, resetting each filter back to "all selected" — a stale
   // FILTERS Set could otherwise reference dimension indices that no longer
   // exist if the live data's distinct values changed between refreshes.
   function resetFilters(){
     filterControllers.offices.setOptions(DIMS.offices.map((name,i)=>({value:i, text:name})));
     filterControllers.mch2Desc.setOptions(DIMS.mch2Desc.map((name,i)=>({value:i, text:name})));
-    const monthOptions = Array.from(new Set(TREND.month)).sort((a,b)=>a-b);
-    filterControllers.months.setOptions(monthOptions.map(m=>({value:m, text:MONTH_NAMES[m-1]})));
   }
 
   const svgNS = 'http://www.w3.org/2000/svg';
@@ -944,7 +969,6 @@
       if (brandIdx != null && TREND.brand[i] !== brandIdx) continue;
       if (!officeAll && !FILTERS.offices.has(TREND.office[i])) continue;
       if (!mchAll && !FILTERS.mch2Desc.has(TREND.mch2Desc[i])) continue;
-      if (!FILTERS.months.has(TREND.month[i])) continue;
       const m = TREND.month[i]-1;
       cy[m] += TREND.netCY[i]; ly[m] += TREND.netLY[i];
       qcy[m] += TREND.qtyCY[i]; qly[m] += TREND.qtyLY[i];
@@ -1768,14 +1792,21 @@
   let dashboardRef = null;
   let refreshQueued = false;
 
-  // The header's period/year labels come from these Parameters (which the
-  // CY/LY calculated fields are themselves driven off), not from any row —
-  // matches the reference Universe Overview extension's approach.
+  // The header's period/year labels — and, now, every CY/LY calculated
+  // field on the whole workbook — come from these Parameters, not from any
+  // row. matches the reference Universe Overview extension's approach for
+  // reading them; the Start Date/End Date inputs further down additionally
+  // WRITE to them (see the date-range wiring below), which is what lets a
+  // single period change here narrow every chart, not just the ones sourced
+  // from the month-grain Trend worksheet.
   let PERIOD_PARAMS = { periodStart: null, periodEnd: null };
+  let startDateParam = null, endDateParam = null;
   function readPeriodParameters(dashboard){
     return dashboard.getParametersAsync().then(params=>{
       const startParam = params.find(p=>p.name === 'Start Date');
       const endParam = params.find(p=>p.name === 'End Date');
+      startDateParam = startParam || null;
+      endDateParam = endParam || null;
       const startParts = startParam ? parseTableauDateParts(startParam.currentValue.value) : null;
       const endParts = endParam ? parseTableauDateParts(endParam.currentValue.value) : null;
       PERIOD_PARAMS.periodStart = startParts ? partsToISO(startParts) : null;
@@ -1783,6 +1814,86 @@
       return { startParam, endParam };
     });
   }
+
+  /* ---------- Start Date / End Date range control ----------
+     A plain DD/MM/YYYY text pair (not <input type="date">, whose native
+     picker follows OS locale and can't be pinned to DD/MM/YYYY) that writes
+     straight into the "Start Date"/"End Date" Parameters via
+     changeValueAsync() on Apply. Tableau recalculates every CY/LY
+     calculated field off the new bounds and fires ParameterChanged, which
+     is already wired (in initializeExtension() below) to refreshData() —
+     so every chart updates, Detail-sourced ones included. */
+  function formatDateInputText(raw){
+    const digits = raw.replace(/\D/g,'').slice(0,8);
+    let out = digits.slice(0,2);
+    if (digits.length > 2) out += '/' + digits.slice(2,4);
+    if (digits.length > 4) out += '/' + digits.slice(4,8);
+    return out;
+  }
+  function parseDDMMYYYY(s){
+    const m = String(s).trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (!m) return null;
+    const day = +m[1], month = +m[2], year = +m[3];
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    const d = new Date(year, month-1, day);
+    if (d.getFullYear() !== year || d.getMonth() !== month-1 || d.getDate() !== day) return null; // rejects e.g. 31/02/2026
+    return d;
+  }
+  function isoToDDMMYYYY(iso){
+    if (!iso) return '';
+    const [y,m,d] = iso.split('-');
+    return d + '/' + m + '/' + y;
+  }
+  const startDateInput = document.getElementById('startDateInput');
+  const endDateInput = document.getElementById('endDateInput');
+  const dateApplyBtn = document.getElementById('dateApplyBtn');
+  const dateRangeNote = document.getElementById('dateRangeNote');
+  [startDateInput, endDateInput].forEach(inp=>{
+    inp.addEventListener('input', ()=>{
+      inp.value = formatDateInputText(inp.value);
+      inp.classList.remove('invalid');
+    });
+  });
+  // Only overwrites an input the user isn't actively editing — otherwise a
+  // Tableau-side refresh (someone else's Quick Filter, an extract refresh)
+  // could clobber a date the user is mid-way through typing here.
+  function syncDateInputs(){
+    if (document.activeElement !== startDateInput) startDateInput.value = isoToDDMMYYYY(RAW.meta.periodStart);
+    if (document.activeElement !== endDateInput) endDateInput.value = isoToDDMMYYYY(RAW.meta.periodEnd);
+  }
+  function disableDateRange(reason){
+    startDateInput.disabled = true; endDateInput.disabled = true; dateApplyBtn.disabled = true;
+    dateRangeNote.textContent = reason;
+    dateRangeNote.classList.add('show');
+  }
+  dateApplyBtn.addEventListener('click', ()=>{
+    const startDate = parseDDMMYYYY(startDateInput.value);
+    const endDate = parseDDMMYYYY(endDateInput.value);
+    let ok = true;
+    startDateInput.classList.toggle('invalid', !startDate); if (!startDate) ok = false;
+    endDateInput.classList.toggle('invalid', !endDate); if (!endDate) ok = false;
+    if (!ok) { dateRangeNote.textContent = 'Enter both dates as DD/MM/YYYY.'; dateRangeNote.classList.add('show'); return; }
+    if (startDate > endDate) {
+      startDateInput.classList.add('invalid'); endDateInput.classList.add('invalid');
+      dateRangeNote.textContent = 'Start Date must not be after End Date.'; dateRangeNote.classList.add('show');
+      return;
+    }
+    if (!startDateParam || !endDateParam) {
+      dateRangeNote.textContent = 'Parameter "Start Date"/"End Date" not found on this dashboard.'; dateRangeNote.classList.add('show');
+      return;
+    }
+    dateRangeNote.classList.remove('show');
+    dateApplyBtn.disabled = true;
+    Promise.all([
+      startDateParam.changeValueAsync(startDate),
+      endDateParam.changeValueAsync(endDate)
+    ]).catch(err=>{
+      setPlainError('Failed to change Start Date/End Date: ' + (err && err.message ? err.message : err));
+    }).finally(()=>{ dateApplyBtn.disabled = false; });
+  });
+  document.addEventListener('click', (e)=>{
+    if (!e.target.closest('#dateRangeFilter')) dateRangeNote.classList.remove('show');
+  });
 
   function refreshData(){
     if (refreshQueued) return;
@@ -1824,6 +1935,7 @@
           priorYear = currentYear - 1;
           resetFilters();
           renderHeaderMeta();
+          syncDateInputs();
           render();
         }).catch(err=>{
           refreshQueued = false;
@@ -1880,6 +1992,7 @@
         return readPeriodParameters(dashboard).then(({ startParam, endParam })=>{
           if (startParam) startParam.addEventListener(tableau.TableauEventType.ParameterChanged, debouncedRefresh);
           if (endParam) endParam.addEventListener(tableau.TableauEventType.ParameterChanged, debouncedRefresh);
+          if (!startParam || !endParam) disableDateRange('Parameter "Start Date"/"End Date" not found on this dashboard — add both to use this control.');
           refreshData();
         });
       });

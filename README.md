@@ -89,7 +89,7 @@ Net Inc Tax และ Sale Qty ทุกตัวต้อง split เป็น
 
 | Field ใน Tableau | ใช้ทำอะไร |
 |---|---|
-| `Month, Year of Time Date` | แกนเวลาของกราฟ Sales Trend Monthly + ตัวเลือกใน Filter "Month" / ใช้แยกว่านี่คือ worksheet Trend |
+| `Month, Year of Time Date` | แกนเวลาของกราฟ Sales Trend Monthly / ใช้แยกว่านี่คือ worksheet Trend |
 | `Sales Office` | ใช้กรองยอดตาม Filter "Sales Office" ในกราฟ Trend |
 | `Brand` | ใช้หา Top Brand ของ KPI card แล้วดึงเส้นแนวโน้มรายเดือนของแบรนด์นั้นมาทำ sparkline |
 | `MCH2_Desc ` (มีช่องว่างต่อท้าย) | ใช้กรองยอดตาม Filter "MCH2" ในกราฟ Trend |
@@ -102,12 +102,14 @@ Net Inc Tax และ Sale Qty ทุกตัวต้อง split เป็น
 
 ## Filter ในตัว extension
 
-หัวมุมขวาบนของ extension มี Filter 3 ตัว อ่านตัวเลือกจากค่าจริงที่ Tableau ส่งมาทุกครั้งที่ข้อมูลรีเฟรช (ไม่ใช่ค่าคงที่):
+หัวมุมขวาบนของ extension มี Filter/ตัวควบคุมช่วงข้อมูลอยู่ 3 ตัว:
 
-- **Sales Office** และ **MCH2** — มีอยู่ทั้งในสอง worksheet จึงกรองได้ทุกการ์ดบนแดชบอร์ด
-- **Month** — มีอยู่แค่ใน worksheet "Trend" (Detail ไม่มี field วันที่เลย) จึงกรองแคบได้แค่กราฟ **Sales Trend Monthly** เท่านั้น การ์ด KPI/ตารางอื่นๆ ที่มาจาก Detail จะไม่เปลี่ยนตาม Filter นี้ — เป็นข้อจำกัดของโครงสร้างข้อมูล ไม่ใช่บั๊ก
+- **Sales Office** และ **MCH2** — checkbox filter ทั่วไป อ่านตัวเลือกจากค่าจริงที่ Tableau ส่งมาทุกครั้งที่ข้อมูลรีเฟรช มีอยู่ทั้งในสอง worksheet จึงกรองได้ทุกการ์ดบนแดชบอร์ด และจะ **reset กลับเป็น "เลือกทั้งหมด" ทุกครั้งที่ Tableau ส่งข้อมูลใหม่มา** เพื่อไม่ให้ค้างอ้างอิงค่าที่อาจไม่มีอยู่แล้วในชุดข้อมูลใหม่
+- **Start Date / End Date** (รูปแบบ `DD/MM/YYYY` + ปุ่ม Apply) — ไม่ใช่ client-side filter แต่ **เขียนค่ากลับเข้าไปที่ Parameter `Start Date`/`End Date` ของ Tableau เอง** ผ่าน `changeValueAsync()` เมื่อกด Apply แล้ว Tableau จะ re-calculate ทุก calculated field (`Net Inc Tax - CY/LY`, `Sale Qty - CY/LY`) ตามช่วงวันที่ใหม่ ทำให้ **ทุก Chart อัปเดตตาม รวมถึงที่มาจาก Detail ด้วย** (ต่างจาก Filter Month แบบเดิมที่กรองได้แค่กราฟ Sales Trend Monthly)
+  - ค่าเริ่มต้นในช่องจะ sync กับค่า Parameter ปัจจุบันเสมอ (จะไม่ทับค่าที่ผู้ใช้กำลังพิมพ์ค้างอยู่)
+  - ถ้าใส่วันที่ผิดรูปแบบ, End Date มาก่อน Start Date, หรือ Dashboard ไม่มี Parameter ชื่อ `Start Date`/`End Date` จะโชว์กล่องข้อความเตือนใต้ช่องกรอกทันที ไม่เงียบ
 
-Filter ทั้ง 3 ตัวจะ **reset กลับเป็น "เลือกทั้งหมด" ทุกครั้งที่ Tableau ส่งข้อมูลใหม่มา** (เปลี่ยน Quick Filter / Parameter / worksheet refresh บน Tableau เอง) เพื่อไม่ให้ค้างอ้างอิงค่าที่อาจไม่มีอยู่แล้วในชุดข้อมูลใหม่
+> **ข้อควรระวัง:** การกด Apply จะเปลี่ยนค่า Parameter บน **Dashboard จริง** ไม่ใช่แค่ภายใน extension เฉยๆ — ถ้า Dashboard มี Worksheet/Extension อื่นที่ผูกกับ Parameter เดียวกันอยู่ด้วย การเปลี่ยนช่วงวันที่จาก extension นี้จะไปกระทบสิ่งอื่นบน Dashboard เดียวกันด้วย
 
 ---
 
