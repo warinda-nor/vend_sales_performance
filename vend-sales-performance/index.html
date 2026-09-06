@@ -893,26 +893,45 @@
   // ---------- Download all detail (top-right header control) ----------
   // A real multi-sheet .xlsx via SheetJS — one sheet per card, read straight
   // off each card's table element (present in the DOM regardless of whether
-  // its own "View table" toggle currently shows it).
+  // its own "View table" toggle currently shows it), plus a raw "Detail
+  // Sales Daily" sheet (see DAILY_WORKSHEET_NAME below) that isn't used by
+  // any chart on the dashboard at all — read fresh from Tableau only when
+  // this button is clicked, not on every refresh, since it isn't needed for
+  // rendering and could be a much bigger worksheet (daily grain).
   const XLSX_SHEET_NAMES = { channel:'Channel', trend:'Trend Monthly', office:'Sales Office', brand:'Brand', mch2:'MCH2', products:'Top Products' };
-  function exportAllXlsx(){
+  async function exportAllXlsx(){
     if (!window.XLSX){ console.error('SheetJS failed to load; cannot build the .xlsx file.'); return; }
-    const wb = XLSX.utils.book_new();
-    document.querySelectorAll('.icon-btn[data-export]').forEach(btn=>{
-      const key = btn.dataset.export;
-      const table = document.querySelector('#'+key+'-table table');
-      if (!table) return;
-      const ws = XLSX.utils.table_to_sheet(table);
-      XLSX.utils.book_append_sheet(wb, ws, XLSX_SHEET_NAMES[key] || key);
-    });
-    const filename = 'vendor-sales-detail-all.xlsx';
-    const wbout = XLSX.write(wb, { bookType:'xlsx', type:'array' });
-    const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(()=> URL.revokeObjectURL(url), 1000);
+    const btn = document.getElementById('downloadAllBtn');
+    btn.disabled = true;
+    try {
+      const wb = XLSX.utils.book_new();
+      document.querySelectorAll('.icon-btn[data-export]').forEach(btn=>{
+        const key = btn.dataset.export;
+        const table = document.querySelector('#'+key+'-table table');
+        if (!table) return;
+        const ws = XLSX.utils.table_to_sheet(table);
+        XLSX.utils.book_append_sheet(wb, ws, XLSX_SHEET_NAMES[key] || key);
+      });
+      if (dailyWorksheet) {
+        try {
+          const daily = await readWorksheetRows(dailyWorksheet);
+          const ws = XLSX.utils.json_to_sheet(daily.rows);
+          XLSX.utils.book_append_sheet(wb, ws, 'Detail Sales Daily');
+        } catch (err) {
+          console.error('Failed to read "'+DAILY_WORKSHEET_NAME+'" worksheet for export:', err);
+        }
+      }
+      const filename = 'vendor-sales-detail-all.xlsx';
+      const wbout = XLSX.write(wb, { bookType:'xlsx', type:'array' });
+      const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(()=> URL.revokeObjectURL(url), 1000);
+    } finally {
+      btn.disabled = false;
+    }
   }
   document.getElementById('downloadAllBtn').addEventListener('click', exportAllXlsx);
 
@@ -1789,6 +1808,11 @@
      ============================================================ */
   let detailWorksheet = null;
   let trendWorksheet = null;
+  // Optional third worksheet, identified by NAME (not by required fields,
+  // since nothing on the dashboard reads or aggregates it) — included as a
+  // raw extra sheet in "Download all detail" only, when present.
+  const DAILY_WORKSHEET_NAME = 'Detail Sales Daily';
+  let dailyWorksheet = null;
   let dashboardRef = null;
   let refreshQueued = false;
 
@@ -1971,6 +1995,7 @@
       const dashboard = tableau.extensions.dashboardContent.dashboard;
       dashboardRef = dashboard;
       const worksheets = dashboard.worksheets;
+      dailyWorksheet = worksheets.find(w=>w.name === DAILY_WORKSHEET_NAME) || null;
 
       const columnChecks = worksheets.map(ws=>
         ws.getSummaryColumnsInfoAsync().then(cols=>({ ws, fieldNames: cols.map(c=>c.fieldName) }))

@@ -49,7 +49,7 @@ tableau.extensions.1.latest.js  Tableau Extensions API (index.html เรีย�
 2. ลาก object **Extension** จากแผง Objects มาวางในตำแหน่งที่ต้องการ
 3. เลือก **My Extensions → Access Local Extensions** แล้วเลือกไฟล์ `vend-sales-performance/VendSalesPerformance.trex`
    (หรือถ้า deploy ผ่าน GitHub Pages แล้ว จะสามารถแชร์ไฟล์ `.trex` นี้ให้คนอื่นใช้ได้เลยโดยไม่ต้องมีไฟล์ index.html อยู่ในเครื่อง เพราะ extension จะไปโหลดจาก URL บน GitHub Pages โดยตรง)
-4. Dashboard ต้องมี Worksheet ทั้งหมด **2 ตัว** ตามสเปกด้านล่าง — **ตั้งชื่อ Worksheet เป็นอะไรก็ได้ตามใจ** เพราะ extension จะดูจาก **field ที่มีอยู่ใน worksheet นั้นๆ** เพื่อแยกว่าอันไหนคือ Detail อันไหนคือ Trend (ไม่ได้ดูจากชื่อ worksheet):
+4. Dashboard ต้องมี Worksheet **อย่างน้อย 2 ตัว** ตามสเปกด้านล่าง (มี worksheet ที่ 3 แบบไม่บังคับได้ด้วย ดูหัวข้อ "Worksheet ที่ 3" ด้านล่าง) — **ตั้งชื่อ Worksheet Detail/Trend เป็นอะไรก็ได้ตามใจ** เพราะ extension จะดูจาก **field ที่มีอยู่ใน worksheet นั้นๆ** เพื่อแยกว่าอันไหนคือ Detail อันไหนคือ Trend (ไม่ได้ดูจากชื่อ worksheet):
    - มี field **`Article Id`** → ถือเป็น **Detail**
    - มี field **`Month, Year of Time Date`** แต่ **ไม่มี** `Article Id` → ถือเป็น **Trend**
 5. ถ้า field ที่ต้องใช้ขาดไปฝั่งใดฝั่งหนึ่ง extension จะโชว์ banner สีแดงบอกชื่อ field ที่ขาดแบบเจาะจง ไม่ใช่หน้าจอเปล่าๆ — ให้แก้ชื่อ field ใน Tableau (หรือแก้ค่าคงที่ `DETAIL_FIELDS`/`TREND_FIELDS` ใน `index.html`) ให้ตรงกัน
@@ -97,6 +97,17 @@ Net Inc Tax และ Sale Qty ทุกตัวต้อง split เป็น
 | `Sale Qty - CY`, `Sale Qty - LY` | KPI จำนวนขาย + กราฟ Trend รายเดือน |
 
 > ชื่อ field ต้องตรงกับในตาราง **เป๊ะๆ รวมช่องว่างต่อท้าย** (ตรงตามค่าคงที่ `DETAIL_FIELDS` / `TREND_FIELDS` ท้ายไฟล์ `index.html`) ถ้าใน data source ใช้ชื่อคอลัมน์ต่างจากนี้ (เช่นไม่มีช่องว่างต่อท้าย `MCH2_Desc`/`MC_Desc`) ให้แก้ค่าในตัวแปรเหล่านั้น (และจุดที่เรียก `r['...']` ในฟังก์ชัน `buildDashboardData`) ให้ตรงกับ data source จริง
+
+---
+
+## Worksheet ที่ 3 (ไม่บังคับ) — "Detail Sales Daily"
+
+ถ้า Dashboard มี worksheet ที่ชื่อ **ตรงตัวเป๊ะๆ ว่า `Detail Sales Daily`** extension จะดึงข้อมูล worksheet นี้มาแนบเป็น sheet เพิ่มในไฟล์ `.xlsx` ตอนกด **"Download all detail"** (ปุ่มมุมขวาบนของ header) โดยไม่ผ่านการประมวลผล/แปลงค่าใดๆ เลย — เอาทุกคอลัมน์ที่มีมาใส่ตรงๆ
+
+- **ไม่บังคับต้องมี** — ถ้าไม่มี worksheet ชื่อนี้ ตัว Dashboard ทำงานปกติทุกอย่าง แค่ไฟล์ Excel ที่ดาวน์โหลดจะไม่มี sheet "Detail Sales Daily" เท่านั้น (ไม่มี error banner ขึ้น)
+- **ไม่จำกัด field ใดๆ** — ต่างจาก worksheet "Detail"/"Trend" ที่ต้องมี field ตามสเปกด้านบน worksheet นี้จะมีคอลัมน์อะไรก็ได้ตามใจ เพราะไม่ได้ถูกนำไปคำนวณหรือแสดงในการ์ดใดๆ ของ Dashboard เลย
+- อ่านข้อมูลตอนกดปุ่ม Download เท่านั้น (ไม่ได้อ่านทุกครั้งที่ Dashboard รีเฟรชเหมือน Detail/Trend) เพื่อไม่ให้ช้าลงโดยไม่จำเป็น เผื่อ worksheet นี้มีข้อมูลรายวันซึ่งมักมีจำนวนแถวเยอะกว่า Detail/Trend มาก
+- ถ้าเปลี่ยนชื่อ worksheet เป็นอย่างอื่น ต้องแก้ค่าคงที่ `DAILY_WORKSHEET_NAME` ท้ายไฟล์ `index.html` ให้ตรงกันด้วย
 
 ---
 
