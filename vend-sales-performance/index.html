@@ -2002,8 +2002,14 @@
       );
 
       return Promise.all(columnChecks).then(results=>{
-        const detail = results.find(r=>r.fieldNames.includes(DETAIL_KEY_FIELD));
-        const trend = results.find(r=>r.fieldNames.includes(TREND_KEY_FIELD) && !r.fieldNames.includes(DETAIL_KEY_FIELD));
+        // "Detail Sales Daily" also carries an "Article Id" field, so it can
+        // satisfy the Detail check on its own — exclude it by name up front
+        // rather than relying on field overlap or worksheet order (which
+        // shifted once it became a floating object, and briefly matched it
+        // as "Detail" instead of the real worksheet).
+        const candidates = results.filter(r=>r.ws.name !== DAILY_WORKSHEET_NAME);
+        const detail = candidates.find(r=>r.fieldNames.includes(DETAIL_KEY_FIELD));
+        const trend = candidates.find(r=>r.fieldNames.includes(TREND_KEY_FIELD) && !r.fieldNames.includes(DETAIL_KEY_FIELD));
 
         if (!detail || !trend) {
           setStatus('');
