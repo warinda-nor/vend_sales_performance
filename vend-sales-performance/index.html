@@ -909,14 +909,24 @@
   const DAILY_COLUMN_ORDER = [
     'Vendor Id', 'Vendor Name', 'DATE_ID', 'Sales Office', 'Sales Channel',
     'Article Id', 'Article Name Th', 'Brand',
-    'MCH3_Desc ', 'MCH2_Desc ', 'MCH1 Desc', 'MC_Desc ',
+    'MCH3_Desc', 'MCH2_Desc', 'MCH1_Desc', 'MC_Desc',
     'Item Flag', 'Flag_Project',
     'SALE_NET_INC', 'SALE_QTY', 'SALE_SQM'
   ];
+  // Matched trimmed (whitespace-insensitive) rather than by exact string —
+  // this worksheet's real field names turned out to carry trailing spaces
+  // inconsistently (some do, "MCH1 Desc" didn't even use an underscore
+  // until it was renamed), so an exact match kept silently missing fields
+  // and dropping them to the end instead of their intended position.
   function reorderDailyRow(row){
+    const rowKeys = Object.keys(row);
+    const used = new Set();
     const ordered = {};
-    DAILY_COLUMN_ORDER.forEach(k=>{ if (k in row) ordered[k] = row[k]; });
-    Object.keys(row).forEach(k=>{ if (!(k in ordered)) ordered[k] = row[k]; });
+    DAILY_COLUMN_ORDER.forEach(k=>{
+      const match = rowKeys.find(rk => !used.has(rk) && rk.trim() === k.trim());
+      if (match) { ordered[match] = row[match]; used.add(match); }
+    });
+    rowKeys.forEach(rk=>{ if (!used.has(rk)) ordered[rk] = row[rk]; });
     return ordered;
   }
   async function exportAllXlsx(){
