@@ -1835,8 +1835,13 @@
     if (!m) return null;
     const day = +m[1], month = +m[2], year = +m[3];
     if (month < 1 || month > 12 || day < 1 || day > 31) return null;
-    const d = new Date(year, month-1, day);
-    if (d.getFullYear() !== year || d.getMonth() !== month-1 || d.getDate() !== day) return null; // rejects e.g. 31/02/2026
+    // Built via Date.UTC, NOT `new Date(year, month-1, day)` (LOCAL midnight) — verified
+    // against real Tableau that a local-midnight Date crosses the UTC date boundary once
+    // changeValueAsync() round-trips it, landing the Parameter on the previous day in any
+    // timezone ahead of UTC (e.g. a UTC+7 browser sending 01/05/2026 came back as 30/04/2026).
+    // Date.UTC pins the exact intended calendar date regardless of the browser's local zone.
+    const d = new Date(Date.UTC(year, month-1, day));
+    if (d.getUTCFullYear() !== year || d.getUTCMonth() !== month-1 || d.getUTCDate() !== day) return null; // rejects e.g. 31/02/2026
     return d;
   }
   function isoToDDMMYYYY(iso){
