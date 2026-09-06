@@ -899,6 +899,26 @@
   // this button is clicked, not on every refresh, since it isn't needed for
   // rendering and could be a much bigger worksheet (daily grain).
   const XLSX_SHEET_NAMES = { channel:'Channel', trend:'Trend Monthly', office:'Sales Office', brand:'Brand', mch2:'MCH2', products:'Top Products' };
+  // Tableau's Extensions API returns a worksheet's summary-data columns
+  // alphabetized by field name (an API quirk, unrelated to how fields are
+  // arranged on the Rows shelf in Tableau) — reordered explicitly here to
+  // match the "Detail Sales Daily" worksheet's actual Rows shelf order
+  // instead. Any field not listed here (e.g. the worksheet gains a column
+  // later) still gets included, just appended after these in whatever
+  // order Tableau returned it.
+  const DAILY_COLUMN_ORDER = [
+    'Vendor Id', 'Vendor Name', 'DATE_ID', 'Sales Office', 'Sales Channel',
+    'Article Id', 'Article Name Th', 'Brand',
+    'MCH3_Desc ', 'MCH2_Desc ', 'MCH1_Desc ', 'MC_Desc ',
+    'Item Flag', 'Flag_Project',
+    'SALE_NET_INC', 'SALE_QTY', 'SALE_SQM'
+  ];
+  function reorderDailyRow(row){
+    const ordered = {};
+    DAILY_COLUMN_ORDER.forEach(k=>{ if (k in row) ordered[k] = row[k]; });
+    Object.keys(row).forEach(k=>{ if (!(k in ordered)) ordered[k] = row[k]; });
+    return ordered;
+  }
   async function exportAllXlsx(){
     if (!window.XLSX){ console.error('SheetJS failed to load; cannot build the .xlsx file.'); return; }
     const btn = document.getElementById('downloadAllBtn');
@@ -915,7 +935,7 @@
       if (dailyWorksheet) {
         try {
           const daily = await readWorksheetRows(dailyWorksheet);
-          const ws = XLSX.utils.json_to_sheet(daily.rows);
+          const ws = XLSX.utils.json_to_sheet(daily.rows.map(reorderDailyRow));
           XLSX.utils.book_append_sheet(wb, ws, 'Detail Sales Daily');
         } catch (err) {
           console.error('Failed to read "'+DAILY_WORKSHEET_NAME+'" worksheet for export:', err);
