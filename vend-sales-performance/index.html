@@ -223,7 +223,15 @@
     color: var(--tint, var(--accent)); flex-shrink:0;
   }
   .kpi-title{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); }
-  .kpi-body{ display:flex; align-items:flex-end; justify-content:space-between; gap:10px; }
+  /* flex:1 so this always fills whatever vertical space is left inside
+     .kpi (a column flex) below .kpi-top — otherwise a shorter value (Top
+     Brand's shrink-to-fit font can land well under the normal 25px) makes
+     .kpi-body itself shorter, and since the card's outer height is set by
+     the grid row's tallest sibling, that leftover space shows up as extra
+     gap below .kpi-body instead of being absorbed by it. align-items:
+     flex-end then keeps the value/spark bottom-anchored either way, so
+     every card's content sits flush with the same bottom padding. */
+  .kpi-body{ display:flex; align-items:flex-end; justify-content:space-between; gap:10px; flex:1; }
   /* flex:1 + min-width:0 makes this the flexible side of the row — it grows
      to fill whatever space .kpi-spark's fixed width (below) doesn't claim,
      and min-width:0 lets it shrink below its content's natural width (the
