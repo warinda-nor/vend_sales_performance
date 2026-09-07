@@ -1402,12 +1402,18 @@
     container.appendChild(table);
   }
 
+  // Short display form for a brand name that's too long to read comfortably
+  // at the Top Brand KPI card's fixed 25px — only swaps what's shown in the
+  // card itself; the tooltip/sparkline label still use the real name.
+  const BRAND_DISPLAY_OVERRIDES = { 'AMERICAN STANDARD': 'AMSTD' };
+
   /* ---------- KPI render ---------- */
   function renderKPIs(agg, monthlySeries, topBrandIdx){
     const row = document.getElementById('kpiRow');
     const topBrandVal = topBrandIdx>=0 ? agg.byBrand[topBrandIdx].netCY : -1;
     const topBrandShare = agg.totalNetCY>0 && topBrandIdx>=0 ? (topBrandVal/agg.totalNetCY*100) : 0;
     const topBrandName = topBrandIdx>=0 ? DIMS.brands[topBrandIdx] : null;
+    const topBrandDisplay = topBrandName ? (BRAND_DISPLAY_OVERRIDES[topBrandName] || topBrandName) : null;
 
     const salesGrowth = growthPct(agg.totalNetCY, agg.totalNetLY);
     const qtyGrowth = growthPct(agg.totalQtyCY, agg.totalQtyLY);
@@ -1435,7 +1441,7 @@
         spark: monthlyBarSparkline(monthlySeries.growthPct),
         delta: deltaRow(salesGrowth, 'vs '+priorYear),
         tipLabel:'YoY Growth', tipValues: monthlySeries.growthPct, tipFmt: growthColorSpan },
-      { tint:'var(--cat-5)', iconName:'tag', title:'Top Brand', value: topBrandName || '—',
+      { tint:'var(--cat-5)', iconName:'tag', title:'Top Brand', value: topBrandDisplay || '—',
         spark: topBrandName ? monthlyBarSparkline(monthlySeries.brandNetCY) : '',
         delta: '<div class="kpi-delta"><span class="pill flat">'+topBrandShare.toFixed(0)+'%</span><span class="delta-text">of net sales</span></div>',
         tipLabel: (topBrandName||'Top Brand')+' Sales', tipValues: monthlySeries.brandNetCY, tipFmt: fmtCompact }
@@ -1471,25 +1477,6 @@
     // is inserted, since monthlyBarSparkline only returns markup, not live
     // nodes to bind listeners to.
     const kpiEls = row.querySelectorAll('.kpi');
-
-    // Shrink-to-fit for the value text (mainly Top Brand, whose value is a
-    // name rather than a short number) — a short value never triggers the
-    // loop and stays at the card's normal 25px, only a long one that would
-    // otherwise overflow past the sparkline gets progressively smaller.
-    // Re-measured from the full 25px on every render (not just once) since
-    // a shrunk size from a previous brand name would otherwise compound on
-    // the next re-render / filter change.
-    const KPI_VALUE_MAX_FONT = 25, KPI_VALUE_MIN_FONT = 14;
-    kpiEls.forEach(el=>{
-      const valueEl = el.querySelector('.kpi-value');
-      if (!valueEl) return;
-      let size = KPI_VALUE_MAX_FONT;
-      valueEl.style.fontSize = size + 'px';
-      while (valueEl.scrollWidth > valueEl.clientWidth && size > KPI_VALUE_MIN_FONT) {
-        size--;
-        valueEl.style.fontSize = size + 'px';
-      }
-    });
 
     cards.forEach((k, idx)=>{
       if (!k.tipValues || !k.tipValues.length) return;
