@@ -224,12 +224,15 @@
   }
   .kpi-title{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); }
   .kpi-body{ display:flex; align-items:flex-end; justify-content:space-between; gap:10px; }
-  /* min-width:0 lets this flex item shrink below its content's natural width
-     (the flexbox default is min-width:auto, which otherwise ignores
-     .kpi-value's own overflow:ellipsis entirely) — needed for a long value
-     like a brand name, so it truncates with "…" instead of pushing the
-     sparkline out past the card's edge. */
-  .kpi-value-wrap{ min-width:0; }
+  /* flex:1 + min-width:0 makes this the flexible side of the row — it grows
+     to fill whatever space .kpi-spark's fixed width (below) doesn't claim,
+     and min-width:0 lets it shrink below its content's natural width (the
+     flexbox default is min-width:auto, which otherwise ignores .kpi-value's
+     own overflow:ellipsis entirely). Needed for a long value like a brand
+     name: the value text now shrinks (via the JS in renderKPIs) or
+     truncates with "…" as a last resort, instead of pushing the sparkline
+     narrower than the other KPI cards'. */
+  .kpi-value-wrap{ flex:1; min-width:0; }
   .kpi-value{ font-size:25px; font-weight:700; letter-spacing:-0.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:8px; }
   .kpi-delta{ display:flex; align-items:center; gap:7px; }
   .delta-badge{ width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -240,7 +243,11 @@
   .delta-text b.up{ color:var(--good); font-weight:700; }
   .delta-text b.down{ color:var(--bad); font-weight:700; }
   .delta-text b.flat{ color:var(--text-secondary); font-weight:700; }
-  .kpi-spark{ flex:1; min-width:70px; }
+  /* Fixed width (not flex:1) so every KPI card's sparkline renders at the
+     exact same size regardless of how wide its own value text is — matches
+     what a short numeric value (e.g. "211.61M") already leaves for it today;
+     .kpi-value-wrap is the side that flexes/shrinks instead. */
+  .kpi-spark{ flex:0 0 148px; }
   .kpi-spark svg{ display:block; width:100%; }
   .kpi-spark .mbar{ cursor:pointer; }
 
