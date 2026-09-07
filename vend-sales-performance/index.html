@@ -234,20 +234,23 @@
      narrower than the other KPI cards'. */
   .kpi-value-wrap{ flex:1; min-width:0; }
   .kpi-value{ font-size:25px; font-weight:700; letter-spacing:-0.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:8px; }
-  .kpi-delta{ display:flex; align-items:center; gap:7px; }
+  .kpi-delta{ display:flex; align-items:center; gap:7px; min-width:0; }
   .delta-badge{ width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
   .delta-badge.up{ background: color-mix(in srgb, var(--good) 16%, var(--surface)); color: var(--good); }
   .delta-badge.down{ background: color-mix(in srgb, var(--bad) 16%, var(--surface)); color: var(--bad); }
   .delta-badge.flat{ background: var(--surface-3); color: var(--text-muted); }
-  .delta-text{ font-size:14px; color:var(--text-muted); }
+  /* Kept on one line rather than left to wrap — a narrower .kpi-value-wrap
+     (since .kpi-spark below now claims a fixed width) otherwise wraps
+     "-3.3% vs 2025" / "100% of net sales" onto a second line. */
+  .delta-text{ font-size:14px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .delta-text b.up{ color:var(--good); font-weight:700; }
   .delta-text b.down{ color:var(--bad); font-weight:700; }
   .delta-text b.flat{ color:var(--text-secondary); font-weight:700; }
   /* Fixed width (not flex:1) so every KPI card's sparkline renders at the
-     exact same size regardless of how wide its own value text is — matches
-     what a short numeric value (e.g. "211.61M") already leaves for it today;
-     .kpi-value-wrap is the side that flexes/shrinks instead. */
-  .kpi-spark{ flex:0 0 148px; }
+     exact same size AND the same position regardless of how wide its own
+     value text is — .kpi-value-wrap (flex:1) is the side that flexes/
+     shrinks instead, so it also always leaves this same amount of room. */
+  .kpi-spark{ flex:0 0 110px; }
   .kpi-spark svg{ display:block; width:100%; }
   .kpi-spark .mbar{ cursor:pointer; }
 
