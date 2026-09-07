@@ -364,12 +364,6 @@
   table.datatable tbody tr:hover{ background: var(--surface-2); }
   table.datatable td.num, table.datatable th.num{ text-align:right; font-variant-numeric:tabular-nums; }
   .rank-num{ font-size:14px; color:var(--text-muted); font-weight:600; width:18px; display:inline-block; }
-  /* Product photography is shot on a plain white background, so the thumbnail
-     box stays a fixed white (not the theme's surface color) with a visible
-     border — otherwise a white product blends invisibly into a light theme. */
-  .prod-thumb{ width:40px; height:40px; border-radius:10px; overflow:hidden; flex-shrink:0; position:relative; background:#ffffff; border:1px solid var(--border-strong); }
-  .prod-thumb img{ width:100%; height:100%; object-fit:contain; display:block; }
-  .prod-thumb .fallback{ position:absolute; inset:0; display:none; align-items:center; justify-content:center; color:#fff; font-size:13px; font-weight:700; }
   .prod-name{ font-weight:600; font-size:14.5px; }
   .tag{
     display:inline-block; font-size:12.5px; font-weight:600; padding:2px 8px; border-radius:999px;
@@ -676,8 +670,6 @@
   }
 
   const svgNS = 'http://www.w3.org/2000/svg';
-  const CAT_COLORS = ['var(--cat-1)','var(--cat-2)','var(--cat-3)','var(--cat-4)','var(--cat-5)','var(--cat-6)','var(--cat-7)','var(--cat-8)'];
-  function catColor(i){ return CAT_COLORS[i % CAT_COLORS.length]; }
   // A single-hue blue ramp (light to dark) for the Channel donut specifically —
   // requested as a blue-toned alternative to the full categorical palette.
   const CHANNEL_BLUES = [
@@ -785,7 +777,6 @@
   function pct(n){ return (n>=0?'+':'') + n.toFixed(1) + '%'; }
   function truncate(s, len){ return s && s.length>len ? s.slice(0,len-1)+'…' : s; }
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-  function initials(s){ return (s||'').trim().slice(0,2).toUpperCase(); }
   function growthPct(cur, ly){ return (ly && ly !== 0) ? ((cur-ly)/Math.abs(ly))*100 : null; }
   function growthClass(g){ return g==null ? 'flat' : (g>0.05?'up':(g<-0.05?'down':'flat')); }
   function growthPillHtml(g){
@@ -1494,15 +1485,9 @@
     const rowsHtml = entries.map((p,i)=>{
       const growth = growthPct(p.netCY, p.netLY);
       const qtyGrowth = growthPct(p.qtyCY, p.qtyLY);
-      const color = catColor(p.brIdx);
-      const imgUrl = 'https://productimage.boonthavorn.com/o2/' + p.articleId;
       return '<tr>' +
         '<td><span class="rank-num">'+(i+1)+'</span></td>' +
         '<td class="num">'+escapeHtml(String(p.articleId))+'</td>' +
-        '<td><div class="prod-thumb">' +
-          '<img src="'+imgUrl+'" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">' +
-          '<div class="fallback" style="background:'+color+'">'+initials(p.brand)+'</div>' +
-        '</div></td>' +
         '<td><div class="prod-name">'+escapeHtml(truncate(p.name,48))+'</div></td>' +
         '<td><span class="tag">'+escapeHtml(p.mch||'')+'</span></td>' +
         '<td><span class="tag">'+escapeHtml(p.brand)+'</span></td>' +
@@ -1516,10 +1501,10 @@
     }).join('');
     document.getElementById('products-table').innerHTML =
       '<table class="datatable"><thead><tr>' +
-      '<th></th><th class="num">Article ID</th><th>Image</th><th>Product</th><th>Mch Desc</th><th>Brand</th>' +
+      '<th></th><th class="num">Article ID</th><th>Product</th><th>Mch Desc</th><th>Brand</th>' +
       '<th class="num">Net Sales '+priorYear+'</th><th class="num">Net Sales '+currentYear+'</th><th class="num">% Growth Sales</th>' +
       '<th class="num">Sales Qty '+priorYear+'</th><th class="num">Sales Qty '+currentYear+'</th><th class="num">% Growth Qty</th>' +
-      '</tr></thead><tbody>' + (rowsHtml || '<tr><td colspan="12" style="text-align:center;color:var(--text-muted);padding:20px;">No products found</td></tr>') + '</tbody></table>';
+      '</tr></thead><tbody>' + (rowsHtml || '<tr><td colspan="11" style="text-align:center;color:var(--text-muted);padding:20px;">No products found</td></tr>') + '</tbody></table>';
   }
 
   /* ---------- main render ---------- */
