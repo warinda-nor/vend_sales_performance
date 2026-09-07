@@ -810,8 +810,8 @@
   }
   // Plain colored text (no pill background) for a %Growth value inside a
   // table cell or tooltip row — green for up, red for down, muted for flat/n/a.
-  function growthColorSpan(g){
-    if (g == null) return '<span style="color:var(--text-muted)">n/a</span>';
+  function growthColorSpan(g, naLabel){
+    if (g == null) return '<span style="color:var(--text-muted)">'+(naLabel || 'n/a')+'</span>';
     const cls = growthClass(g);
     const color = cls==='up' ? 'var(--good)' : cls==='down' ? 'var(--bad)' : 'var(--text-muted)';
     return '<span style="color:'+color+';font-weight:600;">'+pct(g)+'</span>';
@@ -1524,10 +1524,10 @@
         '<td><span class="tag">'+escapeHtml(p.brand)+'</span></td>' +
         '<td class="num">'+fmtNum(p.netLY)+'</td>' +
         '<td class="num">'+fmtNum(p.netCY)+'</td>' +
-        '<td class="num">'+growthColorSpan(growth)+'</td>' +
+        '<td class="num">'+growthColorSpan(growth, 'New')+'</td>' +
         '<td class="num">'+fmtNum(p.qtyLY)+'</td>' +
         '<td class="num">'+fmtNum(p.qtyCY)+'</td>' +
-        '<td class="num">'+growthColorSpan(qtyGrowth)+'</td>' +
+        '<td class="num">'+growthColorSpan(qtyGrowth, 'New')+'</td>' +
       '</tr>';
     }).join('');
     document.getElementById('products-table').innerHTML =
