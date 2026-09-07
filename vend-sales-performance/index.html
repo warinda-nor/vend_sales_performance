@@ -224,6 +224,12 @@
   }
   .kpi-title{ font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted); }
   .kpi-body{ display:flex; align-items:flex-end; justify-content:space-between; gap:10px; }
+  /* min-width:0 lets this flex item shrink below its content's natural width
+     (the flexbox default is min-width:auto, which otherwise ignores
+     .kpi-value's own overflow:ellipsis entirely) — needed for a long value
+     like a brand name, so it truncates with "…" instead of pushing the
+     sparkline out past the card's edge. */
+  .kpi-value-wrap{ min-width:0; }
   .kpi-value{ font-size:25px; font-weight:700; letter-spacing:-0.01em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:8px; }
   .kpi-delta{ display:flex; align-items:center; gap:7px; }
   .delta-badge{ width:20px; height:20px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
@@ -1434,7 +1440,7 @@
           '<span class="kpi-title">'+k.title+'</span>' +
         '</div>' +
         '<div class="kpi-body">' +
-          '<div>' +
+          '<div class="kpi-value-wrap">' +
             '<div class="kpi-value num" style="'+(k.valueColor==='up'?'color:var(--good)':k.valueColor==='down'?'color:var(--bad)':'')+'">'+k.value+'</div>' +
             k.delta +
           '</div>' +
