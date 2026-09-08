@@ -30,58 +30,9 @@
     --shadow: 0 1px 2px rgba(11,11,11,0.04), 0 6px 20px rgba(11,11,11,0.06);
     --shadow-sm: 0 1px 2px rgba(11,11,11,0.05);
   }
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      color-scheme: dark;
-      --bg: #0d0d0d;
-      --surface: #1a1a19;
-      --surface-2: #221f1c;
-      --surface-3: #2a2725;
-      --text-primary: #ffffff;
-      --text-secondary: #c3c2b7;
-      --text-muted: #8f8d86;
-      --border: rgba(255,255,255,0.10);
-      --border-strong: rgba(255,255,255,0.16);
-      --grid: #2c2c2a;
-      --axis: #383835;
-      --accent: #3987e5;
-      --accent-soft: #1c2f47;
-      --series-2: #d95926;
-      --good: #0ca30c;
-      --bad: #e66767;
-      --navy: #0c1424;
-      --navy-2: #14213d;
-      --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500;
-      --cat-5: #d55181; --cat-6: #008300; --cat-7: #9085e9; --cat-8: #e66767;
-      --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 26px rgba(0,0,0,0.38);
-      --shadow-sm: 0 1px 2px rgba(0,0,0,0.35);
-    }
-  }
-  :root[data-theme="dark"]{
-    color-scheme: dark;
-    --bg: #0d0d0d;
-    --surface: #1a1a19;
-    --surface-2: #221f1c;
-    --surface-3: #2a2725;
-    --text-primary: #ffffff;
-    --text-secondary: #c3c2b7;
-    --text-muted: #8f8d86;
-    --border: rgba(255,255,255,0.10);
-    --border-strong: rgba(255,255,255,0.16);
-    --grid: #2c2c2a;
-    --axis: #383835;
-    --accent: #3987e5;
-    --accent-soft: #1c2f47;
-    --series-2: #d95926;
-    --good: #0ca30c;
-    --bad: #e66767;
-    --navy: #0c1424;
-    --navy-2: #14213d;
-    --cat-1: #3987e5; --cat-2: #d95926; --cat-3: #199e70; --cat-4: #c98500;
-    --cat-5: #d55181; --cat-6: #008300; --cat-7: #9085e9; --cat-8: #e66767;
-    --shadow: 0 1px 2px rgba(0,0,0,0.3), 0 10px 26px rgba(0,0,0,0.38);
-    --shadow-sm: 0 1px 2px rgba(0,0,0,0.35);
-  }
+  /* Dark mode intentionally not implemented — the dashboard always renders
+     the light palette above, regardless of the device/browser's own
+     prefers-color-scheme setting (no toggle exists to switch it either). */
 
   *{ box-sizing: border-box; }
   html,body{ margin:0; padding:0; }
