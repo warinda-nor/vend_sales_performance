@@ -492,6 +492,13 @@
        overrides an element's own set width) gives the legend the card's
        full width once it's on its own row. */
     .donut-wrap{ flex-direction:column; align-items:stretch; }
+    /* align-items:stretch above is for the legend's benefit (full card
+       width); a fixed-width item like the donut doesn't actually stretch
+       under that rule, but it also isn't centered by it — it falls back to
+       sitting at the start of the cross axis (left) instead. align-self
+       re-centers just this one item, independent of the container's own
+       align-items. */
+    .donut-svg-box{ align-self:center; }
 
     /* Sales by Channel's legend table (Channel/Net Sales/Growth/% Share)
        — its Net Sales (78px) + Growth (.barrow-growth, shared with the
