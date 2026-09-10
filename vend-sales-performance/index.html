@@ -220,7 +220,7 @@
   @media (max-width: 880px){ .grid-2{ grid-template-columns: 1fr; } }
   .card{
     background: var(--surface); border:1px solid var(--border); border-radius:12px;
-    padding:18px 20px; margin-bottom:16px;
+    padding:18px 20px; margin-bottom:16px; min-width:0;
   }
   .card-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:16px; }
   /* Lets a card's chart area vertically center and fill leftover height
@@ -377,23 +377,113 @@
 
   /* ---------- Mobile (embedded in a narrow WebView, e.g. a phone-app
      "view report" modal at ~360-480px) ----------
-     Below this, .topbar-right's own children (filter-bar + the download
-     icon) no longer fit on one line and previously just overflowed off the
-     right edge instead of wrapping; and .kpi-spark's fixed 110px width
-     left almost nothing for the KPI value/delta text once the KPI row
-     drops to 2 columns at 640px, making the number effectively disappear. */
+     .kpi-spark's fixed 110px width left almost nothing for the KPI value/
+     delta text once the KPI row drops to 2 columns at 640px, making the
+     number effectively disappear. Header controls split across two rows:
+     Sales Office + MCH2 on row 1 (.filter-bar, forced to its own full-width
+     line via flex-basis:100%), Start/End Date + download on row 2 — .date-
+     range now sits as .topbar-right's own direct child (moved out of
+     .filter-bar in the markup) specifically so it can land on that second
+     row instead of wrapping inside .filter-bar's own box. */
   @media (max-width: 480px){
-    /* .topbar-right's base flex-shrink:0 means it always renders at its
-       full natural content width even after wrapping onto its own line
-       below .brandmark — giving .filter-bar nothing to actually wrap
-       against, so it overflows instead. width:100% + flex-shrink:1
-       constrains it to the real available width so its children's own
-       flex-wrap (already set) can finally take effect. */
-    .topbar-right{ flex-wrap: wrap; flex-shrink:1; width:100%; justify-content: flex-end; }
-    .filter-bar{ justify-content: flex-end; }
-    .date-range{ flex-wrap: wrap; justify-content: flex-end; row-gap:6px; }
-    .date-input{ width:72px; }
+    .topbar-right{ flex-wrap: wrap; width:100%; justify-content: flex-start; row-gap:8px; }
+    .filter-bar{ flex-wrap: nowrap; flex: 1 1 100%; justify-content: flex-start; }
+    .date-range{ flex-wrap: nowrap; flex-shrink:0; }
+    /* Wide enough for the full "DD/MM/YYYY" (10 chars) even at the -2px
+       mobile font size below — 66px was clipping the year down to
+       "202" ("01/01/202" + hidden "6"). */
+    .date-input{ width:80px; }
+    #downloadAllBtn{ flex-shrink:0; }
     .kpi-spark{ display:none; }
+
+    /* Vendor card dropped from the KPI row — the 4 numeric/brand tiles get
+       the space instead. */
+    .vendor-card{ display:none; }
+
+    /* Tighter outer gutters — the 24px desktop padding wastes a
+       disproportionate share of a ~375-480px screen. */
+    .wrap{ padding: 14px 12px 24px; }
+    .topbar-inner{ padding: 14px 16px; }
+
+    /* Card subtitles removed — the chart/legend alone already carries
+       enough context at this size, and every px of vertical space counts
+       on a phone. */
+    #trendCaption, #officeCaption{ display:none; }
+    /* Sales Office switches to a single-bar list on mobile (see the
+       renderBarRowsGrowth swap below), so the Last Year/Current Year color
+       legend no longer applies to what's actually drawn. */
+    #officeLegend{ display:none; }
+
+    /* Sales by Channel donut shrinks a bit smaller (see renderDonutChart's
+       own isMobile check for the SVG size itself); this only resizes the
+       center label so it doesn't look oversized inside the smaller ring
+       (19px was already a mobile-specific reduction from the 23px desktop
+       size — the extra -2px pass below takes it to 17px). */
+    .donut-center-value{ font-size:17px; }
+
+    /* Top 10 Best-Selling Products — cells no longer wrap (which was
+       inflating every row's height); #products-table already scrolls
+       horizontally (.scrollx) so a wide table just pans instead. Subtitle
+       removed for the same reason as Trend/Office's above. */
+    #products-table td, #products-table th{ white-space:nowrap; }
+    #productsCaption{ display:none; }
+
+    /* Sales Office/Brand/MCH2 header row (NET SALES / GROWTH / % SHARE)
+       drifted ~60px left of the data rows below it — .barrow-track has
+       min-width:60px but .h-track (the header's equivalent cell) didn't, so
+       the two independent flex rows computed different total widths and
+       their same-named columns landed at different x positions. Matching
+       the min-width keeps every header right-aligned over its own column. */
+    .barrow-header .h-track{ min-width:60px; }
+
+    /* -2px on every font-size, mobile only — desktop is untouched since
+       none of this lives outside the media query. Generated from every
+       font-size declaration in the stylesheet above this block (each
+       clamped to an 8px floor); .donut-center-value is handled separately
+       above since it already had its own mobile-specific base size. */
+    .brandmark .appname{ font-size:20px; }
+    .brandmark .apptag{ font-size:12px; }
+    .vendor-eyebrow{ font-size:10px; }
+    .vendor-card-name{ font-size:16px; }
+    .vendor-id{ font-size:11px; }
+    .filter-btn{ font-size:11.5px; }
+    .filter-count{ font-size:9px; }
+    .filter-panel-actions button{ font-size:10.5px; }
+    .filter-option{ font-size:11.5px; }
+    .date-input{ font-size:11.5px; }
+    .date-range-sep{ font-size:11px; }
+    .date-apply-btn{ font-size:10.5px; }
+    .date-range-note{ font-size:10.5px; }
+    .kpi-title{ font-size:10px; }
+    .kpi-value{ font-size:23px; }
+    .delta-text{ font-size:12px; }
+    .card-title{ font-size:13px; }
+    .card-caption{ font-size:11px; }
+    .card-legend .item{ font-size:12px; }
+    .chart-toggle{ font-size:11.5px; }
+    .barrow-label{ font-size:12.5px; }
+    .barrow-value{ font-size:12px; }
+    .barrow-share{ font-size:11.5px; }
+    .barrow-header span{ font-size:9px; }
+    .donut-center-label{ font-size:10px; }
+    .donut-legend-header span{ font-size:9px; }
+    .donut-legend-header .donut-legend-label{ font-size:9px; }
+    .donut-legend-label{ font-size:12.5px; }
+    .donut-legend-value{ font-size:12px; }
+    .donut-legend-share{ font-size:11.5px; }
+    .axis-label{ font-size:10.5px; }
+    .pill{ font-size:11px; }
+    table.datatable{ font-size:12.5px; }
+    table.datatable th{ font-size:10.5px; }
+    .rank-num{ font-size:12px; }
+    .prod-name{ font-size:12.5px; }
+    .tag{ font-size:10.5px; }
+    #products-table .datatable{ font-size:11px; }
+    #products-table .datatable th{ font-size:9.5px; }
+    #products-table .prod-name{ font-size:11px; }
+    #products-table .tag{ font-size:9.5px; }
+    #products-table .rank-num{ font-size:11px; }
+    #tooltip{ font-size:12px; }
   }
 </style>
 </head>
@@ -429,13 +519,13 @@
           </button>
           <div class="filter-panel"></div>
         </div>
-        <div class="date-range" id="dateRangeFilter">
-          <input type="text" class="date-input" id="startDateInput" placeholder="DD/MM/YYYY" inputmode="numeric" maxlength="10" aria-label="Start Date">
-          <span class="date-range-sep">–</span>
-          <input type="text" class="date-input" id="endDateInput" placeholder="DD/MM/YYYY" inputmode="numeric" maxlength="10" aria-label="End Date">
-          <button type="button" class="date-apply-btn" id="dateApplyBtn">Apply</button>
-          <div class="date-range-note" id="dateRangeNote"></div>
-        </div>
+      </div>
+      <div class="date-range" id="dateRangeFilter">
+        <input type="text" class="date-input" id="startDateInput" placeholder="DD/MM/YYYY" inputmode="numeric" maxlength="10" aria-label="Start Date">
+        <span class="date-range-sep">–</span>
+        <input type="text" class="date-input" id="endDateInput" placeholder="DD/MM/YYYY" inputmode="numeric" maxlength="10" aria-label="End Date">
+        <button type="button" class="date-apply-btn" id="dateApplyBtn">Apply</button>
+        <div class="date-range-note" id="dateRangeNote"></div>
       </div>
       <button class="icon-btn" id="downloadAllBtn" title="Download all detail" aria-label="Download all detail">
         <svg class="ic" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><polyline points="7 10 12 15 17 10"/><path d="M5 21h14"/></svg>
@@ -469,7 +559,7 @@
       <div class="card-head">
         <div>
           <div class="card-title">Sales Trend Monthly</div>
-          <div class="card-caption">Net sales, last year vs. current year, by month</div>
+          <div class="card-caption" id="trendCaption">Net sales, last year vs. current year, by month</div>
           <div class="card-legend">
             <span class="item"><span class="dot" style="background:color-mix(in srgb, var(--accent) 42%, white)"></span><span id="legendLastYear">Last Year</span></span>
             <span class="item"><span class="dot" style="background:var(--accent)"></span><span id="legendThisYear">Current Year</span></span>
@@ -491,8 +581,8 @@
     <div class="card-head">
       <div>
         <div class="card-title">Sales by Sales Office</div>
-        <div class="card-caption">Net sales, last year vs. current year, by sales office</div>
-        <div class="card-legend">
+        <div class="card-caption" id="officeCaption">Net sales, last year vs. current year, by sales office</div>
+        <div class="card-legend" id="officeLegend">
           <span class="item"><span class="dot" style="background:color-mix(in srgb, var(--accent) 42%, white)"></span><span>Last Year (<span id="officeLYYear"></span>)</span></span>
           <span class="item"><span class="dot" style="background:var(--accent)"></span><span>Current Year (<span id="officeCYYear"></span>)</span></span>
         </div>
@@ -666,6 +756,11 @@
   }
 
   const svgNS = 'http://www.w3.org/2000/svg';
+  // Same breakpoint the CSS "Mobile" section uses (max-width: 480px) — read
+  // via matchMedia rather than window.innerWidth directly, so it can never
+  // drift out of sync with the actual CSS media query.
+  const MOBILE_MQ = window.matchMedia('(max-width: 480px)');
+  function isMobileViewport(){ return MOBILE_MQ.matches; }
   // A single-hue blue ramp (light to dark) for the Channel donut specifically —
   // requested as a blue-toned alternative to the full categorical palette.
   const CHANNEL_BLUES = [
@@ -1022,10 +1117,11 @@
   /* ---------- trend area chart (CY vs LY, smooth, aligned by month) ---------- */
   function renderTrendChart(container, cySeries, lySeries){
     container.innerHTML = '';
+    const isMobile = isMobileViewport();
     const padL = 16, padR = 16, padT = 54, padB = 26;
     // Fills the card's actual width instead of a fixed plot size.
     const availW = Math.max(container.getBoundingClientRect().width, 320);
-    const plotW = availW - padL - padR, plotH = 240;
+    const plotW = availW - padL - padR, plotH = isMobile ? 160 : 240;
     const width = availW, height = plotH + padT + padB;
 
     // Trim to the months either series actually has data for (both CY and LY
@@ -1083,6 +1179,7 @@
     // white surface + dark ink, regardless of page theme, so it reads as a
     // distinct floating callout rather than part of the chart surface.
     cyPts.forEach((p,i)=>{
+      if (isMobile && i !== n-1) return; // only the latest month's value callout, to declutter a narrow chart — month axis labels above still show every month
       const valueText = fmtCompact(cySeries[i]);
       const g = lySeries[i] !== 0 ? growthPct(cySeries[i], lySeries[i]) : null;
       const growthText = g == null ? null : pct(g);
@@ -1116,14 +1213,14 @@
       g2.appendChild(svgEl('rect', { x:cx-5, y:bubbleBottomY-1, width:10, height:2, fill:'#ffffff' }));
 
       const valueLbl = svgEl('text', { x:cx, y: bubbleTopY + (growthText!=null ? 16 : 16), 'text-anchor':'middle' });
-      valueLbl.setAttribute('style', 'font-size:13px;font-weight:700;');
+      valueLbl.setAttribute('style', 'font-size:'+(isMobile?11:13)+'px;font-weight:700;');
       valueLbl.setAttribute('fill', '#0b0b0b');
       valueLbl.textContent = valueText;
       g2.appendChild(valueLbl);
 
       if (growthText != null){
         const gLbl = svgEl('text', { x:cx, y: bubbleTopY + 31, 'text-anchor':'middle' });
-        gLbl.setAttribute('style', 'font-size:12px;font-weight:700;');
+        gLbl.setAttribute('style', 'font-size:'+(isMobile?10:12)+'px;font-weight:700;');
         gLbl.setAttribute('fill', growthColor);
         gLbl.textContent = (cls==='up'?'▲ ':cls==='down'?'▼ ':'— ') + growthText;
         g2.appendChild(gLbl);
@@ -1279,7 +1376,8 @@
     container.innerHTML = '';
     if (!items.length){ container.innerHTML = '<div style="padding:24px;color:var(--text-muted);font-size:15px;">No data available</div>'; return; }
     const total = items.reduce((a,d)=>a+Math.max(d.value,0), 0);
-    const size = 176, strokeW = 16, r = (size-strokeW)/2, c = size/2;
+    const isMobile = isMobileViewport();
+    const size = isMobile ? 140 : 176, strokeW = isMobile ? 13 : 16, r = (size-strokeW)/2, c = size/2;
     const circumference = 2*Math.PI*r;
     const gapPx = 3;
 
@@ -1564,7 +1662,15 @@
     document.getElementById('officeLYYear').textContent = priorYear;
     document.getElementById('officeCYYear').textContent = currentYear;
     const officeItems = withGrowth(DIMS.offices, agg.byOffice);
-    renderGroupedBarChart(document.getElementById('office-chart'), officeItems);
+    // Sales Office as the Y axis (label rows + horizontal bars) on mobile —
+    // the same list layout Brand/MCH2 already use, which handles many
+    // categories (17 offices) far better on a narrow screen than rotated/
+    // truncated X-axis labels on vertical bars would.
+    if (isMobileViewport()) {
+      renderBarRowsGrowth(document.getElementById('office-chart'), officeItems, {labelHeader:'Sales Office', total: agg.totalNetCY});
+    } else {
+      renderGroupedBarChart(document.getElementById('office-chart'), officeItems);
+    }
     renderTable(document.getElementById('office-table'),
       standardTableHeaders('Sales Office'),
       officeItems.map(d=>standardTableRow(d, agg.totalNetCY)));
