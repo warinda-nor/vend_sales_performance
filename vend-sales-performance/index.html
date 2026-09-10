@@ -478,6 +478,31 @@
     .donut-legend-label{ font-size:12.5px; }
     .donut-legend-value{ font-size:12px; }
     .donut-legend-share{ font-size:11.5px; }
+
+    /* .donut-wrap's default row layout only wraps the legend onto its own
+       line if the donut (fixed ~140px) + legend (flex:1, min-width:0)
+       don't both fit their hypothetical sizes — with min-width:0, the
+       legend's hypothetical size is ~0, so flex-wrap decided everything
+       already "fit" on one row and never wrapped at all. The legend was
+       then squeezed into whatever sliver was left after the fixed-size
+       donut (often 0px — the Channel label was rendering into a
+       zero-width box, not just a narrow one). Forcing a column layout
+       stacks them unconditionally, and align-items:stretch (donut-svg-box
+       keeps its own explicit 140px regardless, since stretch never
+       overrides an element's own set width) gives the legend the card's
+       full width once it's on its own row. */
+    .donut-wrap{ flex-direction:column; align-items:stretch; }
+
+    /* Sales by Channel's legend table (Channel/Net Sales/Growth/% Share)
+       — its Net Sales (78px) + Growth (.barrow-growth, shared with the
+       barrows tables, 100px) + % Share (60px) columns alone need 238px.
+       Narrowed just for this legend (the .donut-legend-row/-header prefix
+       keeps .barrow-growth's own 100px intact everywhere else it's used)
+       to leave the label more room even at full card width. */
+    .donut-legend{ min-width:0; }
+    .donut-legend-value{ width:60px; }
+    .donut-legend-share{ width:44px; }
+    .donut-legend-header .barrow-growth, .donut-legend-row .barrow-growth{ width:64px; }
     .axis-label{ font-size:10.5px; }
     .pill{ font-size:11px; }
     table.datatable{ font-size:12.5px; }
