@@ -374,6 +374,27 @@
 
 
   @media (prefers-reduced-motion: reduce){ .knob{ transition:none !important; } }
+
+  /* ---------- Mobile (embedded in a narrow WebView, e.g. a phone-app
+     "view report" modal at ~360-480px) ----------
+     Below this, .topbar-right's own children (filter-bar + the download
+     icon) no longer fit on one line and previously just overflowed off the
+     right edge instead of wrapping; and .kpi-spark's fixed 110px width
+     left almost nothing for the KPI value/delta text once the KPI row
+     drops to 2 columns at 640px, making the number effectively disappear. */
+  @media (max-width: 480px){
+    /* .topbar-right's base flex-shrink:0 means it always renders at its
+       full natural content width even after wrapping onto its own line
+       below .brandmark — giving .filter-bar nothing to actually wrap
+       against, so it overflows instead. width:100% + flex-shrink:1
+       constrains it to the real available width so its children's own
+       flex-wrap (already set) can finally take effect. */
+    .topbar-right{ flex-wrap: wrap; flex-shrink:1; width:100%; justify-content: flex-end; }
+    .filter-bar{ justify-content: flex-end; }
+    .date-range{ flex-wrap: wrap; justify-content: flex-end; row-gap:6px; }
+    .date-input{ width:72px; }
+    .kpi-spark{ display:none; }
+  }
 </style>
 </head>
 <body>
