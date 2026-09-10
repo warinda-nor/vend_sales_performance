@@ -388,6 +388,13 @@
   @media (max-width: 480px){
     .topbar-right{ flex-wrap: wrap; width:100%; justify-content: flex-start; row-gap:8px; }
     .filter-bar{ flex-wrap: nowrap; flex: 1 1 100%; justify-content: flex-start; }
+    /* .filter-panel was right:0 (anchored to its button's right edge,
+       extending leftward) — fine when the filter row sits at the right of
+       a wide header, but now that filters are left-aligned, "Sales Office"
+       sits at the screen's left edge and a leftward-opening 230px panel
+       overflowed off-screen entirely (its checkboxes were unreachable).
+       Opens rightward instead. */
+    .filter-panel{ left:0; right:auto; }
     .date-range{ flex-wrap: nowrap; flex-shrink:0; }
     /* Wide enough for the full "DD/MM/YYYY" (10 chars) even at the -2px
        mobile font size below — 66px was clipping the year down to
